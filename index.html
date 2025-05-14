@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParKing</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <img src="logo.png" alt="ParKing Logo" class="logo">
+        <h1>ParKing - Finde und bewerte Parkplätze</h1>
+
+        <div id="auth">
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Passwort">
+            <button onclick="login()">Login</button>
+            <button onclick="signup()">Registrieren</button>
+        </div>
+
+        <div id="map-section" style="display:none;">
+            <div id="map">[Karte wird hier geladen]</div>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
