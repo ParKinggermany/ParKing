@@ -12,7 +12,8 @@ const translations = {
         login_error: "Login fehlgeschlagen: ",
         login_success: "Login erfolgreich",
         signup_error: "Registrierung fehlgeschlagen: ",
-        signup_success: "Registrierung erfolgreich. Bitte bestätigen Sie Ihre Email."
+        signup_success: "Registrierung erfolgreich. Bitte bestätigen Sie Ihre Email.",
+        out_of_bounds: "Bitte nur in Deutschland bewerten."
     },
     en: {
         title: "ParKing - Find and review parking spots",
@@ -23,7 +24,8 @@ const translations = {
         login_error: "Login failed: ",
         login_success: "Login successful",
         signup_error: "Registration failed: ",
-        signup_success: "Registration successful. Please verify your email."
+        signup_success: "Registration successful. Please verify your email.",
+        out_of_bounds: "Please only add reviews within Germany."
     }
 };
 
@@ -75,11 +77,9 @@ let map;
 let markerLayer;
 
 function initMap() {
-    if (map) {
-        map.remove(); // falls Karte schon existiert
-    }
+    if (map) return; // Karte nur einmal erstellen
 
-    map = L.map('map').setView([52.52, 13.405], 13); // Berlin
+    map = L.map('map').setView([52.52, 13.405], 6); // Deutschlandübersicht
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap Contributors'
@@ -89,6 +89,13 @@ function initMap() {
 
     map.on('click', async function(e) {
         const { lat, lng } = e.latlng;
+
+        // Begrenzung auf Deutschland (ungefähr)
+        if (lat < 47 || lat > 55 || lng < 5 || lng > 15) {
+            alert(translations[currentLang].out_of_bounds);
+            return;
+        }
+
         const kommentar = prompt(translations[currentLang].prompt);
         if (kommentar) {
             await supabase.from('parkplaetze').insert([{ lat, lng, kommentar }]);
@@ -106,6 +113,11 @@ async function loadMarkers() {
         data.forEach(({ lat, lng, kommentar }) => {
             L.marker([lat, lng]).addTo(markerLayer).bindPopup(kommentar);
         });
+
+        // Auf Marker zoomen, wenn vorhanden
+        if (markerLayer.getLayers().length > 0) {
+            map.fitBounds(markerLayer.getBounds(), { padding: [50, 50] });
+        }
     }
 }
 
@@ -113,4 +125,5 @@ async function loadMarkers() {
 window.addEventListener('DOMContentLoaded', () => {
     setLanguage(currentLang);
 });
+
 
