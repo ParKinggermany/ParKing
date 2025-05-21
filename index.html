@@ -16,18 +16,24 @@
 <body>
     <div class="container">
         <img src="logo.png" alt="ParKing Logo" class="logo">
-        <h1>ParKing - Finde und bewerte Parkplätze</h1>
+        <h1><span data-i18n="title">ParKing - Finde und bewerte Parkplätze</span></h1>
+
+        <!-- Sprache auswählen -->
+        <select id="language-select" onchange="setLanguage(this.value)">
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
+        </select>
 
         <div id="auth">
             <input type="email" id="email" placeholder="Email">
             <input type="password" id="password" placeholder="Passwort">
-            <button onclick="login()">Login</button>
-            <button onclick="signup()">Registrieren</button>
+            <button onclick="login()"><span data-i18n="login">Login</span></button>
+            <button onclick="signup()"><span data-i18n="signup">Registrieren</span></button>
         </div>
 
         <div id="map-section" style="display:none;">
             <div id="map">[Karte wird hier geladen]</div>
-            <button onclick="logout()">Logout</button>
+            <button onclick="logout()"><span data-i18n="logout">Logout</span></button>
         </div>
     </div>
 
