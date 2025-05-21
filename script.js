@@ -2,14 +2,52 @@ const supabaseUrl = 'https://oezsueksjdaycavlxrjl.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lenN1ZWtzamRheWNhdmx4cmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcyMzQ1NTEsImV4cCI6MjA2MjgxMDU1MX0.ZsXCkzYXVSY01_OCM8zfZo9HjPTbWhI6WHdTQtQAF0E';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+const translations = {
+    de: {
+        title: "ParKing - Finde und bewerte Parkplätze",
+        login: "Login",
+        signup: "Registrieren",
+        logout: "Logout",
+        prompt: "Gib deine Bewertung für diesen Parkplatz ein:",
+        login_error: "Login fehlgeschlagen: ",
+        login_success: "Login erfolgreich",
+        signup_error: "Registrierung fehlgeschlagen: ",
+        signup_success: "Registrierung erfolgreich. Bitte bestätigen Sie Ihre Email."
+    },
+    en: {
+        title: "ParKing - Find and review parking spots",
+        login: "Login",
+        signup: "Sign up",
+        logout: "Logout",
+        prompt: "Enter your review for this parking spot:",
+        login_error: "Login failed: ",
+        login_success: "Login successful",
+        signup_error: "Registration failed: ",
+        signup_success: "Registration successful. Please verify your email."
+    }
+};
+
+let currentLang = 'de';
+
+function setLanguage(lang) {
+    currentLang = lang;
+    const elements = document.querySelectorAll('[data-i18n]');
+    elements.forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[lang][key]) {
+            el.textContent = translations[lang][key];
+        }
+    });
+}
+
 async function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-        alert('Login fehlgeschlagen: ' + error.message);
+        alert(translations[currentLang].login_error + error.message);
     } else {
-        alert('Login erfolgreich');
+        alert(translations[currentLang].login_success);
         document.getElementById('auth').style.display = 'none';
         document.getElementById('map-section').style.display = 'block';
         initMap();
@@ -21,9 +59,9 @@ async function signup() {
     const password = document.getElementById('password').value;
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) {
-        alert('Registrierung fehlgeschlagen: ' + error.message);
+        alert(translations[currentLang].signup_error + error.message);
     } else {
-        alert('Registrierung erfolgreich. Bitte bestätigen Sie Ihre Email.');
+        alert(translations[currentLang].signup_success);
     }
 }
 
@@ -37,6 +75,10 @@ let map;
 let markerLayer;
 
 function initMap() {
+    if (map) {
+        map.remove(); // falls Karte schon existiert
+    }
+
     map = L.map('map').setView([52.52, 13.405], 13); // Berlin
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -47,7 +89,7 @@ function initMap() {
 
     map.on('click', async function(e) {
         const { lat, lng } = e.latlng;
-        const kommentar = prompt("Gib deine Bewertung für diesen Parkplatz ein:");
+        const kommentar = prompt(translations[currentLang].prompt);
         if (kommentar) {
             await supabase.from('parkplaetze').insert([{ lat, lng, kommentar }]);
             loadMarkers();
@@ -66,3 +108,9 @@ async function loadMarkers() {
         });
     }
 }
+
+// Sprache beim Start setzen
+window.addEventListener('DOMContentLoaded', () => {
+    setLanguage(currentLang);
+});
+
