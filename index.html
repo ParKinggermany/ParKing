@@ -12,41 +12,11 @@
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            font-family: sans-serif;
-        }
-
-        .container {
-            padding: 20px;
-            text-align: center;
-        }
-
-        #map {
-            height: 500px;
-            width: 100%;
-            margin-top: 20px;
-            border: 1px solid #ccc;
-        }
-
-        input, button, select {
-            margin: 5px;
-            padding: 8px;
-            font-size: 1rem;
-        }
-
-        .logo {
-            max-width: 150px;
-            margin-bottom: 10px;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
         <img src="logo.png" alt="ParKing Logo" class="logo">
+        <h1>ParKing - Finde und bewerte Parkplätze</h1>
         <h1><span data-i18n="title">ParKing - Finde und bewerte Parkplätze</span></h1>
 
         <!-- Sprache auswählen -->
@@ -55,17 +25,18 @@
             <option value="en">English</option>
         </select>
 
-        <!-- Login/Register -->
         <div id="auth">
             <input type="email" id="email" placeholder="Email">
             <input type="password" id="password" placeholder="Passwort">
+            <button onclick="login()">Login</button>
+            <button onclick="signup()">Registrieren</button>
             <button onclick="login()"><span data-i18n="login">Login</span></button>
             <button onclick="signup()"><span data-i18n="signup">Registrieren</span></button>
         </div>
 
-        <!-- Karte und Logout -->
         <div id="map-section" style="display:none;">
-            <div id="map"></div>
+            <div id="map">[Karte wird hier geladen]</div>
+            <button onclick="logout()">Logout</button>
             <button onclick="logout()"><span data-i18n="logout">Logout</span></button>
         </div>
     </div>
@@ -73,4 +44,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
