@@ -77,7 +77,7 @@ let map;
 let markerLayer;
 
 function initMap() {
-    if (map) return; // Karte nur einmal erstellen
+    if (map) return;
 
     map = L.map('map').setView([52.52, 13.405], 6); // Deutschlandübersicht
 
@@ -98,8 +98,14 @@ function initMap() {
 
         const kommentar = prompt(translations[currentLang].prompt);
         if (kommentar) {
-            await supabase.from('parkplaetze').insert([{ lat, lng, kommentar }]);
-            loadMarkers();
+            const { error } = await supabase.from('parkplaetze').insert([{ lat, lng, kommentar }]);
+            if (!error) {
+                // Marker direkt nach erfolgreichem Insert hinzufügen
+                const marker = L.marker([lat, lng]).addTo(markerLayer).bindPopup(kommentar);
+                marker.openPopup(); // Optional: Popup sofort anzeigen
+            } else {
+                console.error("Fehler beim Einfügen:", error);
+            }
         }
     });
 
@@ -114,7 +120,6 @@ async function loadMarkers() {
             L.marker([lat, lng]).addTo(markerLayer).bindPopup(kommentar);
         });
 
-        // Auf Marker zoomen, wenn vorhanden
         if (markerLayer.getLayers().length > 0) {
             map.fitBounds(markerLayer.getBounds(), { padding: [50, 50] });
         }
