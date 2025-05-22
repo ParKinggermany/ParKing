@@ -1,39 +1,38 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ParKing</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ParKing</title>
+  <link rel="stylesheet" href="style.css">
 
-    <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
-    <div class="container">
-        <img src="logo.png" alt="ParKing Logo" class="logo">
-        <h1 data-i18n="title">ParKing - Finde und bewerte Parkplätze</h1>
+  <div class="container">
+    <img src="logo.png" alt="ParKing Logo" class="logo">
+    <h1 data-i18n="title">ParKing - Finde und bewerte Parkplätze</h1>
 
-        <!-- Authentifizierung -->
-        <div id="auth">
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Passwort">
-            <button onclick="login()" data-i18n="login">Login</button>
-            <button onclick="signup()" data-i18n="signup">Registrieren</button>
-        </div>
-
-        <!-- Kartenbereich -->
-        <div id="map-section" style="display:none;">
-            <div id="map">[Karte wird hier geladen]</div>
-            <button onclick="logout()" data-i18n="logout">Logout</button>
-        </div>
+    <!-- Auth -->
+    <div id="auth">
+      <input type="email" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="Passwort">
+      <button onclick="login()" data-i18n="login">Login</button>
+      <button onclick="signup()" data-i18n="signup">Registrieren</button>
     </div>
 
-    <!-- App Script -->
-    <script src="script.js"></script>
+    <!-- Map Section -->
+    <div id="map-section" style="display:none;">
+      <div id="map">[Karte wird hier geladen]</div>
+      <button onclick="logout()" data-i18n="logout">Logout</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
