@@ -17,7 +17,7 @@ body {
   margin: 20px auto;
 }
 
-input {
+input, textarea {
   padding: 10px;
   margin: 5px;
   width: 80%;
@@ -35,7 +35,6 @@ button {
   color: white;
   border: none;
   border-radius: 6px;
-  transition: background-color 0.3s ease;
 }
 
 button:hover {
@@ -49,12 +48,6 @@ button:hover {
   background-color: #ddd;
 }
 
-.leaflet-popup-content {
-  font-size: 14px;
-  line-height: 1.5;
-  text-align: left;
-}
-
 .popup-content img {
   margin-top: 5px;
   border-radius: 8px;
@@ -62,16 +55,28 @@ button:hover {
   height: auto;
 }
 
-.popup-content button {
-  margin-top: 10px;
-  padding: 6px 12px;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
-.popup-content button:hover {
-  background-color: #1e7e34;
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  text-align: left;
+}
+
+.modal-content input,
+.modal-content textarea {
+  width: 100%;
+  margin: 8px 0;
+  padding: 8px;
 }
