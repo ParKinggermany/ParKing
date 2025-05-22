@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ParKing</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -14,7 +14,6 @@
     <img src="logo.png" alt="ParKing Logo" class="logo" />
     <h1 data-i18n="title">ParKing - Finde und bewerte Parkplätze</h1>
 
-    <!-- Auth -->
     <div id="auth">
       <input type="email" id="email" placeholder="Email" />
       <input type="password" id="password" placeholder="Passwort" />
@@ -22,18 +21,25 @@
       <button onclick="signup()" data-i18n="signup">Registrieren</button>
     </div>
 
-    <!-- Map + Features -->
     <div id="map-section" style="display: none;">
       <div id="search-bar">
         <input type="text" id="address-input" placeholder="Straße, Ort..." />
         <button onclick="geocodeAddress()">Suchen</button>
         <button onclick="zeigeNahegelegeneParkplaetze()">In der Nähe</button>
       </div>
-
-      <input type="file" id="upload-input" accept="image/*" />
-
       <div id="map">[Karte wird hier geladen]</div>
       <button onclick="logout()" data-i18n="logout">Logout</button>
+    </div>
+  </div>
+
+  <div id="bewertungs-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3>Parkplatz bewerten</h3>
+      <input type="number" id="sterne-input" min="1" max="5" placeholder="Sterne (1–5)" />
+      <textarea id="kommentar-input" placeholder="Kommentar..."></textarea>
+      <input type="file" id="bild-input" accept="image/*" />
+      <button onclick="submitBewertung()">Bewertung speichern</button>
+      <button onclick="schliesseModal()">Abbrechen</button>
     </div>
   </div>
 
