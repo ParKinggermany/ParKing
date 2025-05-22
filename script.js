@@ -174,6 +174,63 @@ async function bewerteParkplatz(parkplatzId) {
   }
 }
 
+// 🔍 Adresssuche
+async function geocodeAddress() {
+  const address = document.getElementById('address-input').value;
+  if (!address) return;
+
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+  const results = await response.json();
+
+  if (results.length > 0) {
+    const { lat, lon } = results[0];
+    map.setView([parseFloat(lat), parseFloat(lon)], 16);
+  } else {
+    alert("Adresse nicht gefunden.");
+  }
+}
+
+// 📍 Parkplätze in der Nähe
+async function zeigeNahegelegeneParkplaetze() {
+  const center = map.getCenter();
+  const RADIUS = 0.5; // km
+
+  const { data: alleParkplaetze } = await supabase.from('parkplaetze').select('*');
+  const nearby = alleParkplaetze.filter(p => {
+    const d = entfernungInKm(center.lat, center.lng, p.lat, p.lng);
+    return d <= RADIUS;
+  });
+
+  markerLayer.clearLayers();
+
+  for (const platz of nearby) {
+    const popupContent = `
+      <div class="popup-content">
+        <strong>Parkplatz</strong><br>
+        <button onclick="bewerteParkplatz('${platz.id}')">Bewerten</button>
+      </div>`;
+    L.marker([platz.lat, platz.lng]).addTo(markerLayer).bindPopup(popupContent);
+  }
+
+  if (nearby.length > 0) {
+    map.fitBounds(markerLayer.getBounds(), { padding: [30, 30] });
+  } else {
+    alert("Keine Parkplätze in der Nähe gefunden.");
+  }
+}
+
+// Entfernung berechnen (in km)
+function entfernungInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Initialisieren
 window.addEventListener('DOMContentLoaded', () => {
   setLanguage(currentLang);
 });
