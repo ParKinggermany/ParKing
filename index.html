@@ -28,6 +28,15 @@
 
     <!-- Map Section -->
     <div id="map-section" style="display:none;">
+
+      <!-- Suchfeld -->
+      <div id="search-bar" style="margin-top: 10px;">
+        <input type="text" id="address-input" placeholder="Straße, Ort..." />
+        <button onclick="geocodeAddress()">Suchen</button>
+        <button onclick="zeigeNahegelegeneParkplaetze()">In der Nähe</button>
+      </div>
+
+      <!-- Karte -->
       <div id="map">[Karte wird hier geladen]</div>
       <button onclick="logout()" data-i18n="logout">Logout</button>
     </div>
