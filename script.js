@@ -14,18 +14,6 @@ const translations = {
         signup_error: "Registrierung fehlgeschlagen: ",
         signup_success: "Registrierung erfolgreich. Bitte bestätigen Sie Ihre Email.",
         out_of_bounds: "Bitte nur in Deutschland bewerten."
-    },
-    en: {
-        title: "ParKing - Find and review parking spots",
-        login: "Login",
-        signup: "Sign up",
-        logout: "Logout",
-        prompt: "Enter your review for this parking spot:",
-        login_error: "Login failed: ",
-        login_success: "Login successful",
-        signup_error: "Registration failed: ",
-        signup_success: "Registration successful. Please verify your email.",
-        out_of_bounds: "Please only add reviews within Germany."
     }
 };
 
@@ -96,16 +84,18 @@ function initMap() {
             return;
         }
 
-        const kommentar = prompt(translations[currentLang].prompt);
-        if (kommentar) {
-            const { error } = await supabase.from('parkplaetze').insert([{ lat, lng, kommentar }]);
-            if (!error) {
-                // Marker direkt nach erfolgreichem Insert hinzufügen
-                const marker = L.marker([lat, lng]).addTo(markerLayer).bindPopup(kommentar);
-                marker.openPopup(); // Optional: Popup sofort anzeigen
-            } else {
-                console.error("Fehler beim Einfügen:", error);
-            }
+        const kommentar = prompt("Kommentar?");
+        const sterne = prompt("Wie viele Sterne (1-5)?");
+        const bildUrl = prompt("Bild-URL (optional)?");
+
+        const { error } = await supabase.from('parkplaetze').insert([
+            { lat, lng, kommentar, bewertung: parseInt(sterne), bild_url: bildUrl }
+        ]);
+
+        if (!error) {
+            loadMarkers();
+        } else {
+            console.error("Fehler beim Einfügen:", error);
         }
     });
 
@@ -116,8 +106,12 @@ async function loadMarkers() {
     markerLayer.clearLayers();
     const { data, error } = await supabase.from('parkplaetze').select('*');
     if (!error && data) {
-        data.forEach(({ lat, lng, kommentar }) => {
-            L.marker([lat, lng]).addTo(markerLayer).bindPopup(kommentar);
+        data.forEach(({ id, lat, lng, kommentar, bewertung, bild_url }) => {
+            let popupContent = `<strong>${kommentar || 'Kein Kommentar'}</strong><br>`;
+            if (bewertung) popupContent += `⭐ ${bewertung}/5<br>`;
+            if (bild_url) popupContent += `<img src="${bild_url}" alt="Foto" width="100"><br>`;
+            popupContent += `<button onclick="bewerteParkplatz('${id}')">Bewerten</button>`;
+            L.marker([lat, lng]).addTo(markerLayer).bindPopup(popupContent);
         });
 
         if (markerLayer.getLayers().length > 0) {
@@ -126,9 +120,25 @@ async function loadMarkers() {
     }
 }
 
+async function bewerteParkplatz(id) {
+    const sterne = prompt("Neue Sterne-Bewertung (1-5)?");
+    const kommentar = prompt("Neuer Kommentar?");
+    const bildUrl = prompt("Bild-URL (optional)?");
+
+    const { error } = await supabase
+        .from('parkplaetze')
+        .update({ bewertung: parseInt(sterne), kommentar, bild_url: bildUrl })
+        .eq('id', id);
+
+    if (error) {
+        alert("Fehler beim Bewerten: " + error.message);
+    } else {
+        alert("Danke für deine Bewertung!");
+        loadMarkers();
+    }
+}
+
 // Sprache beim Start setzen
 window.addEventListener('DOMContentLoaded', () => {
     setLanguage(currentLang);
 });
-
-
