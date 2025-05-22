@@ -20,12 +20,9 @@ let currentLang = 'de';
 
 function setLanguage(lang) {
   currentLang = lang;
-  const elements = document.querySelectorAll('[data-i18n]');
-  elements.forEach(el => {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
-    if (translations[lang][key]) {
-      el.textContent = translations[lang][key];
-    }
+    if (translations[lang][key]) el.textContent = translations[lang][key];
   });
 }
 
@@ -67,7 +64,6 @@ function initMap() {
   if (map) return;
 
   map = L.map('map').setView([52.52, 13.405], 6);
-
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap Contributors'
   }).addTo(map);
@@ -81,25 +77,27 @@ function initMap() {
       return;
     }
 
-    const kommentar = prompt("Kommentar?");
-    const sterne = prompt("Wie viele Sterne (1-5)?");
-    const bildUrl = prompt("Bild-URL (optional)?");
+    const sterne = prompt("Wie viele Sterne (1–5)?");
+    if (!sterne || isNaN(sterne) || sterne < 1 || sterne > 5) return;
 
-    const { data: platzData, error: insertError } = await supabase
+    const kommentar = prompt("Kommentar?");
+    if (!kommentar) return;
+
+    const file = document.getElementById('upload-input').files[0];
+    const bildUrl = await uploadBild(file);
+    document.getElementById('upload-input').value = '';
+
+    const { data: platzData, error: platzErr } = await supabase
       .from('parkplaetze')
       .insert([{ lat, lng }])
       .select()
       .single();
-
-    if (insertError) {
-      console.error("Fehler beim Parkplatz:", insertError);
-      return;
-    }
+    if (platzErr) return console.error(platzErr);
 
     const user = await supabase.auth.getUser();
     const user_id = user?.data?.user?.id;
 
-    const { error: ratingError } = await supabase
+    const { error: bewErr } = await supabase
       .from('bewertungen')
       .insert([{
         parkplatz_id: platzData.id,
@@ -109,11 +107,7 @@ function initMap() {
         bild_url: bildUrl
       }]);
 
-    if (ratingError) {
-      console.error("Bewertungsfehler:", ratingError);
-    } else {
-      loadMarkers();
-    }
+    if (!bewErr) loadMarkers();
   });
 
   loadMarkers();
@@ -121,39 +115,49 @@ function initMap() {
 
 async function loadMarkers() {
   markerLayer.clearLayers();
-  const { data: parkplaetze, error } = await supabase.from('parkplaetze').select('*');
-  if (error) return console.error("Ladefehler:", error);
+  const { data: parkplaetze } = await supabase.from('parkplaetze').select('*');
 
   for (const platz of parkplaetze) {
     const { data: bewertungen } = await supabase
       .from('bewertungen')
       .select('*')
-      .eq('parkplatz_id', platz.id);
+      .eq('parkplatz_id', platz.id)
+      .order('created_at', { ascending: false });
 
     const avg = bewertungen.length
-      ? (bewertungen.reduce((sum, b) => sum + b.sterne, 0) / bewertungen.length).toFixed(1)
+      ? (bewertungen.reduce((s, b) => s + b.sterne, 0) / bewertungen.length).toFixed(1)
       : "Keine Bewertungen";
 
-    const popupContent = `
-      <div class="popup-content">
-        <strong>Durchschnitt: ${avg} ⭐</strong><br>
-        <button onclick="bewerteParkplatz('${platz.id}')">Bewerten</button>
-      </div>`;
+    let popup = `<div class="popup-content"><strong>Ø ${avg} ⭐</strong><br>`;
+    if (bewertungen.length > 0) {
+      popup += "<strong>Kommentare:</strong><br>";
+      bewertungen.slice(0, 3).forEach(b => {
+        popup += `${b.sterne}⭐ - ${b.kommentar}<br>`;
+        if (b.bild_url) popup += `<img src="${b.bild_url}" alt="Bild" width="100"><br>`;
+      });
+    }
+    popup += `<br><button onclick="bewerteParkplatz('${platz.id}')">Bewerten</button></div>`;
 
-    L.marker([platz.lat, platz.lng])
-      .addTo(markerLayer)
-      .bindPopup(popupContent);
+    L.marker([platz.lat, platz.lng]).addTo(markerLayer).bindPopup(popup);
   }
 
-  if (markerLayer.getLayers().length > 0) {
-    map.fitBounds(markerLayer.getBounds(), { padding: [50, 50] });
+  const allMarkers = markerLayer.getLayers();
+  if (allMarkers.length > 0) {
+    const bounds = L.featureGroup(allMarkers).getBounds();
+    map.fitBounds(bounds, { padding: [50, 50] });
   }
 }
 
 async function bewerteParkplatz(parkplatzId) {
   const sterne = prompt("Sterne (1–5)?");
+  if (!sterne || isNaN(sterne) || sterne < 1 || sterne > 5) return;
+
   const kommentar = prompt("Kommentar?");
-  const bildUrl = prompt("Bild-URL (optional)?");
+  if (!kommentar) return;
+
+  const file = document.getElementById('upload-input').files[0];
+  const bildUrl = await uploadBild(file);
+  document.getElementById('upload-input').value = '';
 
   const user = await supabase.auth.getUser();
   const user_id = user?.data?.user?.id;
@@ -166,71 +170,69 @@ async function bewerteParkplatz(parkplatzId) {
     bild_url: bildUrl
   }]);
 
-  if (error) {
-    alert("Fehler beim Speichern der Bewertung: " + error.message);
-  } else {
+  if (!error) {
     alert("Bewertung gespeichert!");
     loadMarkers();
+  } else {
+    alert("Fehler: " + error.message);
   }
 }
 
-// 🔍 Adresssuche
+async function uploadBild(file) {
+  if (!file) return null;
+  const fileName = `${Date.now()}_${file.name}`;
+  const { error } = await supabase.storage.from('bewertungen').upload(fileName, file);
+  if (error) {
+    alert("Fehler beim Upload: " + error.message);
+    return null;
+  }
+  const { data } = supabase.storage.from('bewertungen').getPublicUrl(fileName);
+  return data.publicUrl;
+}
+
 async function geocodeAddress() {
   const address = document.getElementById('address-input').value;
   if (!address) return;
-
-  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
-  const results = await response.json();
-
-  if (results.length > 0) {
-    const { lat, lon } = results[0];
-    map.setView([parseFloat(lat), parseFloat(lon)], 16);
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+  const data = await res.json();
+  if (data.length > 0) {
+    map.setView([parseFloat(data[0].lat), parseFloat(data[0].lon)], 16);
   } else {
     alert("Adresse nicht gefunden.");
   }
 }
 
-// 📍 Parkplätze in der Nähe
 async function zeigeNahegelegeneParkplaetze() {
   const center = map.getCenter();
-  const RADIUS = 0.5; // km
+  const RADIUS = 0.5;
 
-  const { data: alleParkplaetze } = await supabase.from('parkplaetze').select('*');
-  const nearby = alleParkplaetze.filter(p => {
-    const d = entfernungInKm(center.lat, center.lng, p.lat, p.lng);
-    return d <= RADIUS;
-  });
+  const { data: alle } = await supabase.from('parkplaetze').select('*');
+  const nearby = alle.filter(p => entfernungInKm(center.lat, center.lng, p.lat, p.lng) <= RADIUS);
 
   markerLayer.clearLayers();
-
   for (const platz of nearby) {
-    const popupContent = `
-      <div class="popup-content">
-        <strong>Parkplatz</strong><br>
-        <button onclick="bewerteParkplatz('${platz.id}')">Bewerten</button>
-      </div>`;
-    L.marker([platz.lat, platz.lng]).addTo(markerLayer).bindPopup(popupContent);
+    const popup = `<div class="popup-content"><strong>Parkplatz</strong><br><button onclick="bewerteParkplatz('${platz.id}')">Bewerten</button></div>`;
+    L.marker([platz.lat, platz.lng]).addTo(markerLayer).bindPopup(popup);
   }
 
   if (nearby.length > 0) {
-    map.fitBounds(markerLayer.getBounds(), { padding: [30, 30] });
+    const bounds = L.featureGroup(markerLayer.getLayers()).getBounds();
+    map.fitBounds(bounds, { padding: [30, 30] });
   } else {
     alert("Keine Parkplätze in der Nähe gefunden.");
   }
 }
 
-// Entfernung berechnen (in km)
 function entfernungInKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) ** 2;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2)**2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Initialisieren
 window.addEventListener('DOMContentLoaded', () => {
   setLanguage(currentLang);
 });
